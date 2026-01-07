@@ -1,0 +1,259 @@
+{
+  "name": "Jewelry_Ad_Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Jewelry Ad Automation",
+        "formFields": {
+          "values": [
+            {
+              "fieldName": "Jewelry Image",
+              "fieldLabel": "Select a jewelry Image",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "requiredField": true
+            },
+            {
+              "fieldName": "Model Image",
+              "fieldLabel": "Select a Model Image",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "requiredField": true
+            },
+            {
+              "fieldName": "Email",
+              "fieldLabel": "Enter your Email",
+              "fieldType": "email",
+              "placeholder": "Enter your email",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Result image is sent on your mail."
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "50fc2087-9b57-4c7e-9cd5-94377aed5ef5",
+      "name": "On form submission",
+      "webhookId": "a0f969f9-9225-4f55-9c46-746317fc5128"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"inline_data\": {\n            \"mime_type\": \"image/png\",\n            \"data\": \"{{ $('jewelry imgto64').item.json.jewelry }}\"\n          }\n        },\n        {\n          \"inline_data\": {\n            \"mime_type\": \"image/png\",\n            \"data\": \"{{ $json.Model }}\"\n          }\n        },\n        {\n          \"text\": \"{ \\\"prompt\\\": \\\"create a professional e-commerce jewelry fashion photo. Take the jewelry from the first image and model from the second image wear it. cinematic atmosphere, professional portrait photography style, shot on 85mm lens f/1.4, shallow depth of field, high contrast, fine art photography, editorial feel\\\", \\\"style\\\": \\\"cinematic, moody, introspective\\\", \\\"lighting\\\": \\\"soft side lighting, high contrast shadows, natural light imitation\\\", \\\"camera\\\": { \\\"Model\\\": \\\"Leica SL2-S\\\", \\\"lens\\\": \\\"85mm\\\", \\\"aperture\\\": \\\"f/1.4\\\", \\\"depth_of_field\\\": \\\"shallow\\\", \\\"angle\\\": \\\"close-up portrait, slightly off-center framing\\\" } }\"\n        }\n      ]\n    }\n  ],\n\"generationConfig\": {\n      \"responseModalities\": [\"TEXT\", \"IMAGE\"],\n      \"imageConfig\": {\"aspectRatio\": \"16:9\"}\n    }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        656,
+        0
+      ],
+      "id": "3ec8b57d-3736-4dfd-a6f0-6c8b3c9200a3",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "BY1NHotvZIBLc2GK",
+          "name": "Gemini_API_Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "binaryPropertyName": "=Jewelry_Image",
+        "destinationKey": "=jewelry",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "b8dc32af-22f7-4504-aac1-6b061cd5edb3",
+      "name": "jewelry imgto64"
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "binaryPropertyName": "Model_Image",
+        "destinationKey": "=Model",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "d0a8e662-a606-4150-9616-c948caf40601",
+      "name": "model imgto64"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1c86cada-65f4-469e-ac86-78b613d262e4",
+              "name": "output image",
+              "value": "={{ $json.candidates[0].content.parts.filter(item => item.inlineData).first().inlineData.data }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        864,
+        0
+      ],
+      "id": "eec1ac05-9d9c-4c65-9a6f-5ccbdd3151bd",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "output image",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1072,
+        0
+      ],
+      "id": "38037987-2da7-4da3-9599-0b5f570e3972",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json.Email }}",
+        "subject": "Result Advertisement Image",
+        "emailType": "text",
+        "message": "WoooHooo!!!!!!!!!!!!!!!!!\n\nFind your Advertisement Image as an Attachment. <3",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        0
+      ],
+      "id": "10cecff3-2a0d-4907-a9c7-f41617a95ba3",
+      "name": "Send a message",
+      "webhookId": "cfd35e0b-fdd3-4f8a-9a22-1ca76fc76c3e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "IH2xTnRK8ZPSQZHV",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "jewelry imgto64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "jewelry imgto64": {
+      "main": [
+        [
+          {
+            "node": "model imgto64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "model imgto64": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "e7d02bf1-13f0-46da-aa54-7a3ccb9727b0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4abe783654d315247197aeecfeef01c1ad2ed81990d7ce8457db9adf74183bba"
+  },
+  "id": "tDSQiEawtakCnOuT",
+  "tags": []
+}
